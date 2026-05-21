@@ -61,7 +61,11 @@ public abstract class AbstractAccessTokenFilter implements ResteasyReactiveClien
         mergedParams.forEach(builder::queryParam);
         builder.queryParam("access_token", getAccessToken());
 
-        final String path = originalUri.getPath().replace("%252C", ",").replace("%253B", ";");
+        final String path = originalUri.getPath()
+                .replace("%252C", ",")
+                .replace("%2C", ",")
+                .replace("%253B", ";")
+                .replace("%3B", ";");
 
         return builder
                 .replacePath(path)
