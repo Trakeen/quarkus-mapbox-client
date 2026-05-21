@@ -23,17 +23,17 @@ paths:
       - name: profile
         in: path
         required: true
-        description: The routing profile to use.
+        description: The routing profile.
         schema:
           $ref: "#/components/schemas/Profile"
 
       - name: coordinates
         in: path
         required: true
+        allowReserved: true
         description: >
-          A semicolon-separated list of between 2 and 25 `{longitude},{latitude}`
-          coordinate pairs to visit in order.
-          Example: `-122.42,37.78;-77.03,38.91`
+          A semicolon-separated list of 2 to 25 {longitude},{latitude} coordinate pairs.
+          Example: -122.42,37.78;-77.03,38.91
         schema:
           type: string
 
@@ -49,9 +49,7 @@ paths:
         - name: alternatives
           in: query
           required: false
-          description: >
-            Whether to try to return alternative routes (`true`) or not (`false`, default).
-            Up to two alternatives may be returned.
+          description: Return up to two alternative routes (true) or not (false, default).
           schema:
             type: boolean
             default: false
@@ -61,22 +59,20 @@ paths:
           required: false
           description: >
             Return additional metadata along the route as a comma-separated list.
-            Must be used in conjunction with `overview=full`.
+            Requires overview=full.
           style: form
           explode: false
           schema:
             type: array
             items:
               $ref: "#/components/schemas/AnnotationEnum"
-            example: [duration, distance, congestion]
 
         - name: avoid_maneuver_radius
           in: query
           required: false
           description: >
-            Radius (1–1000 meters) around the starting point in which the API
-            avoids returning significant maneuvers. Available for `mapbox/driving`
-            and `mapbox/driving-traffic` only.
+            Radius in meters (1–1000) around the starting point in which the API
+            avoids returning significant maneuvers. Cannot be combined with arrive_by or depart_at.
           schema:
             type: number
             minimum: 1
@@ -86,9 +82,8 @@ paths:
           in: query
           required: false
           description: >
-            Influences the direction in which a route starts from a waypoint.
-            Format per waypoint: `{angle},{degrees}`. Separate waypoints with `;`.
-            Angle: 0–360 degrees clockwise from true north. Degrees: deviation range (e.g. 45).
+            Semicolon-separated {angle},{degrees} pairs per waypoint.
+            Angle: 0–360° clockwise from true north. Degrees: deviation range.
           schema:
             type: string
             example: "45,90;"
@@ -97,8 +92,8 @@ paths:
           in: query
           required: false
           description: >
-            Sets the allowed direction of travel when departing intermediate waypoints.
-            Defaults to `true` for driving profiles, `false` for walking and cycling.
+            Direction of travel when departing intermediate waypoints.
+            Defaults to true for driving profiles, false for walking and cycling.
           schema:
             type: boolean
 
@@ -106,45 +101,36 @@ paths:
           in: query
           required: false
           description: >
-            Exclude certain road types from routing. Comma-separated list of values below,
-            or a `point(longitude latitude)` coordinate in WKT format to exclude a custom
-            location. Available values: `motorway`, `toll`, `ferry`, `unpaved`,
-            `cash_only_tolls`, `country_border` (beta), `state_border` (beta), `tunnel` (beta).
+            Road types or custom points to exclude. Comma-separated list.
           style: form
           explode: false
           schema:
             type: array
             items:
               $ref: "#/components/schemas/ExcludeEnum"
-            example: [toll, motorway]
 
         - name: include
           in: query
           required: false
-          description: >
-            Include certain additional road types for routing. Comma-separated list.
-            Available for `mapbox/driving` and `mapbox/driving-traffic` profiles.
+          description: Additional road types to include. Driving profiles only.
           style: form
           explode: false
           schema:
             type: array
             items:
               $ref: "#/components/schemas/IncludeEnum"
-            example: [hov2]
 
         - name: geometries
           in: query
           required: false
-          description: The format of the returned geometry.
+          description: Format of the returned route geometry.
           schema:
             $ref: "#/components/schemas/GeometriesEnum"
 
         - name: language
           in: query
           required: false
-          description: >
-            The language of the returned turn-by-turn text instructions.
-            Defaults to `en` (English).
+          description: Language of the returned turn-by-turn instructions. Defaults to en.
           schema:
             type: string
             default: en
@@ -153,17 +139,14 @@ paths:
         - name: overview
           in: query
           required: false
-          description: >
-            The type of the returned overview geometry. `full` returns the most
-            detailed, `simplified` is a simplified version, `false` omits geometry.
+          description: Level of detail for the overview geometry.
           schema:
             $ref: "#/components/schemas/OverviewEnum"
 
         - name: roundabout_exits
           in: query
           required: false
-          description: >
-            Emit instructions at roundabout exits (`true`) or not (`false`, default).
+          description: Emit instructions at roundabout exits (true) or not (false, default).
           schema:
             type: boolean
             default: false
@@ -171,7 +154,7 @@ paths:
         - name: steps
           in: query
           required: false
-          description: Whether to return steps and turn-by-turn instructions (`true`) or not (`false`, default).
+          description: Return turn-by-turn instructions (true) or not (false, default).
           schema:
             type: boolean
             default: false
@@ -179,9 +162,7 @@ paths:
         - name: voice_instructions
           in: query
           required: false
-          description: >
-            Whether to return SSML-formatted voice instructions along the route (`true`)
-            or not (`false`, default). Must be used with `steps=true`.
+          description: Return SSML-formatted voice instructions. Requires steps=true.
           schema:
             type: boolean
             default: false
@@ -189,9 +170,7 @@ paths:
         - name: banner_instructions
           in: query
           required: false
-          description: >
-            Whether to return banner instruction objects associated with route steps (`true`)
-            or not (`false`, default). Must be used with `steps=true`.
+          description: Return banner instruction objects associated with route steps. Requires steps=true.
           schema:
             type: boolean
             default: false
@@ -199,28 +178,43 @@ paths:
         - name: voice_units
           in: query
           required: false
-          description: >
-            The units used for voice instructions. Defaults to `imperial` for profiles
-            in the US and `metric` elsewhere.
+          description: Unit system for voice instructions.
           schema:
             $ref: "#/components/schemas/VoiceUnitsEnum"
+
+        - name: notifications
+          in: query
+          required: false
+          description: Include notification objects in the response (all, default) or suppress them (none).
+          schema:
+            $ref: "#/components/schemas/NotificationsEnum"
 
         - name: waypoints
           in: query
           required: false
           description: >
-            A semicolon-separated list of index values indicating which coordinates
-            are waypoints. The first and last coordinates are always waypoints.
+            Semicolon-separated zero-based indices indicating which coordinates are waypoints.
+            First and last coordinates are always waypoints.
           schema:
             type: string
             example: "0;2;4"
+
+        - name: waypoints_per_route
+          in: query
+          required: false
+          description: >
+            Place the waypoints array in each route object instead of the root response.
+            Useful with alternatives=true to get separate waypoint sets per route.
+          schema:
+            type: boolean
+            default: false
 
         - name: waypoint_names
           in: query
           required: false
           description: >
-            A semicolon-separated list of custom names for the waypoints, used in banner
-            and voice instructions. Must match the number of waypoints.
+            Semicolon-separated custom names for waypoints. Used in banner and voice instructions.
+            Max 500 characters total.
           schema:
             type: string
             example: "Home;Work"
@@ -229,33 +223,28 @@ paths:
           in: query
           required: false
           description: >
-            A semicolon-separated list of `{longitude},{latitude}` coordinate pairs
-            that are snapped to the waypoints on the route. Useful to direct
-            arrival toward a specific entrance point.
+            Semicolon-separated {longitude},{latitude} pairs snapped to waypoints.
+            Directs arrival toward a specific entrance. Requires steps=true.
           schema:
             type: string
 
         - name: approaches
           in: query
           required: false
-          description: >
-            A semicolon-separated list indicating the side of the road from which to
-            approach each waypoint.
+          description: Semicolon-separated side-of-road approach per waypoint.
           style: form
           explode: false
           schema:
             type: array
             items:
               $ref: "#/components/schemas/ApproachEnum"
-            example: [unrestricted, curb]
 
         - name: radiuses
           in: query
           required: false
           description: >
-            A semicolon-separated list of maximum distances (in meters) that each
-            coordinate may be moved to snap to the road network.
-            Use `unlimited` to use the default snapping radius.
+            Semicolon-separated maximum snapping distances (meters) per coordinate.
+            Use unlimited for the default snapping radius.
           schema:
             type: string
             example: "100;100"
@@ -263,9 +252,7 @@ paths:
         - name: layers
           in: query
           required: false
-          description: >
-            A semicolon-separated list of road layers per waypoint. Used to resolve
-            ambiguity in multi-level roads (e.g. tunnels).
+          description: Semicolon-separated road layer per waypoint for multi-level roads (e.g. tunnels).
           schema:
             type: string
 
@@ -274,8 +261,9 @@ paths:
           in: query
           required: false
           description: >
-            The departure time. Accepts RFC 3339 formatted time (`2024-01-01T09:00`)
-            or the literal `now`. Available for `mapbox/driving` and `mapbox/driving-traffic`.
+            Departure time in ISO 8601 format (YYYY-MM-DDThh:mm, YYYY-MM-DDThh:mmss±hh:mm,
+            YYYY-MM-DDThh:mm:ssZ) or the literal "now".
+            Available for mapbox/driving and mapbox/driving-traffic.
           schema:
             type: string
             example: "2024-06-01T08:00"
@@ -284,53 +272,136 @@ paths:
           in: query
           required: false
           description: >
-            The desired arrival time. RFC 3339 format. Available for `mapbox/driving`
-            and `mapbox/driving-traffic`. Cannot be combined with `avoid_maneuver_radius`.
+            Desired arrival time in ISO 8601 format.
+            Available for mapbox/driving and mapbox/driving-traffic.
+            Cannot be combined with avoid_maneuver_radius.
           schema:
             type: string
             example: "2024-06-01T10:00"
+
+        - name: alley_bias
+          in: query
+          required: false
+          description: >
+            Bias toward or away from alleys. Range -1 (avoid alleys) to 1 (prefer alleys), default 0.
+            Available for driving profiles.
+          schema:
+            type: number
+            minimum: -1
+            maximum: 1
+            default: 0
+
+        - name: max_height
+          in: query
+          required: false
+          description: Maximum vehicle height in meters (0–10, default 1.6). Driving profiles only.
+          schema:
+            type: number
+            minimum: 0
+            maximum: 10
+            default: 1.6
+
+        - name: max_width
+          in: query
+          required: false
+          description: Maximum vehicle width in meters (0–10, default 1.9). Driving profiles only.
+          schema:
+            type: number
+            minimum: 0
+            maximum: 10
+            default: 1.9
+
+        - name: max_weight
+          in: query
+          required: false
+          description: Maximum vehicle weight in metric tons (0–100, default 2.5). Driving profiles only.
+          schema:
+            type: number
+            minimum: 0
+            maximum: 100
+            default: 2.5
+
+        # --- Walking-specific parameters ---
+        - name: walking_speed
+          in: query
+          required: false
+          description: Walking speed in m/s (0.14–6.94, default 1.42). mapbox/walking only.
+          schema:
+            type: number
+            minimum: 0.14
+            maximum: 6.94
+            default: 1.42
+
+        - name: walkway_bias
+          in: query
+          required: false
+          description: >
+            Bias toward or away from walkways. Range -1 (avoid) to 1 (prefer), default 0.
+            mapbox/walking only.
+          schema:
+            type: number
+            minimum: -1
+            maximum: 1
+            default: 0
+
+        # --- Driving-traffic-specific parameters ---
+        - name: snapping_include_closures
+          in: query
+          required: false
+          description: >
+            Semicolon-separated booleans per coordinate. Allows snapping to closed roads.
+            mapbox/driving-traffic only.
+          schema:
+            type: string
+
+        - name: snapping_include_static_closures
+          in: query
+          required: false
+          description: >
+            Semicolon-separated booleans per coordinate. Allows snapping to statically closed roads.
+            mapbox/driving-traffic only.
+          schema:
+            type: string
 
         # --- EV routing parameters ---
         - name: engine
           in: query
           required: false
-          description: Set to `electric` to enable Electric Vehicle routing.
+          description: Set to electric to enable Electric Vehicle routing.
           schema:
             $ref: "#/components/schemas/EngineEnum"
 
         - name: ev_initial_charge
           in: query
           required: false
-          description: Initial battery charge in Wh. Required when `engine=electric`.
+          description: Initial battery charge in Wh. Defaults to ev_max_charge.
           schema:
-            type: number
+            type: integer
 
         - name: ev_max_charge
           in: query
           required: false
-          description: Maximum battery capacity in Wh. Required when `engine=electric`.
+          description: Maximum battery capacity in Wh. Required when engine=electric.
           schema:
-            type: number
+            type: integer
 
         - name: ev_connector_types
           in: query
           required: false
-          description: >
-            Comma-separated list of EV connector types supported by the vehicle.
+          description: EV connector types supported by the vehicle.
           style: form
           explode: false
           schema:
             type: array
             items:
               $ref: "#/components/schemas/EvConnectorTypeEnum"
-            example: [ccs_combo_type1, tesla]
 
         - name: energy_consumption_curve
           in: query
           required: false
           description: >
-            Semicolon-separated list of `{speed},{consumption}` pairs (speed in km/h,
-            consumption in Wh/km). Required when `engine=electric`.
+            Semicolon-separated {speed_kph},{wh_per_km} pairs. Required when engine=electric.
+            Example: 0,300;20,160;80,140;120,180
           schema:
             type: string
 
@@ -338,16 +409,61 @@ paths:
           in: query
           required: false
           description: >
-            Semicolon-separated list of `{charge_level},{charging_power}` pairs (Wh and W).
+            Semicolon-separated {charge_level_wh},{power_w} pairs.
+            Example: 0,100000;40000,70000;60000,30000;80000,10000
           schema:
             type: string
 
         - name: ev_min_charge_at_charging_station
           in: query
           required: false
-          description: Minimum charge (Wh) to retain at each charging station stop.
+          description: Minimum charge in Wh to retain at each charging station stop.
+          schema:
+            type: integer
+
+        - name: ev_min_charge_at_destination
+          in: query
+          required: false
+          description: Minimum charge in Wh to retain at the destination. Defaults to 10% of ev_max_charge.
+          schema:
+            type: integer
+
+        - name: ev_add_charging_stops
+          in: query
+          required: false
+          description: >
+            Automatically add charging stops to the route (true, default).
+            When true, limits input to 12 waypoints.
+          schema:
+            type: boolean
+            default: true
+
+        - name: ev_max_ac_charging_power
+          in: query
+          required: false
+          description: Maximum AC charging power in watts. Default 14400.
+          schema:
+            type: integer
+            default: 14400
+
+        - name: auxiliary_consumption
+          in: query
+          required: false
+          description: Auxiliary power consumption in watts (0–10000).
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+
+        - name: ev_regeneration_efficiency
+          in: query
+          required: false
+          description: Regenerative braking efficiency (0.0–1.0, default 0.7).
           schema:
             type: number
+            minimum: 0
+            maximum: 1
+            default: 0.7
 
       responses:
         "200":
@@ -371,10 +487,8 @@ paths:
       summary: Retrieve directions (POST)
       operationId: postDirections
       description: >
-        Alternative POST version of the Directions endpoint. Useful when the
-        coordinate list is too long for a GET URL. The `coordinates` parameter
-        is sent in the request body; all other parameters can be sent as query
-        parameters or in the body.
+        POST version of the Directions endpoint. Use when the coordinate list is too long for a GET URL.
+        The coordinates are sent in the request body; all other parameters can be sent as query parameters.
       tags:
         - Directions
       requestBody:
@@ -388,7 +502,6 @@ paths:
               properties:
                 coordinates:
                   type: string
-                  description: Semicolon-separated list of longitude,latitude pairs.
                 alternatives:
                   type: boolean
                 steps:
@@ -432,7 +545,7 @@ components:
 
     Profile:
       type: string
-      description: The routing profile to use.
+      description: The routing profile.
       enum:
         - driving-traffic
         - driving
@@ -479,6 +592,7 @@ components:
       enum:
         - ccs_combo_type1
         - ccs_combo_type2
+        - chademo
         - tesla
 
     GeometriesEnum:
@@ -493,8 +607,8 @@ components:
     OverviewEnum:
       type: string
       description: >
-        Level of detail for the overview geometry. `full` is most detailed,
-        `simplified` is a reduced version, `false` omits geometry entirely.
+        Level of detail for the overview geometry. full is most detailed,
+        simplified is a reduced version, false omits geometry entirely.
       default: simplified
       enum:
         - full
@@ -503,31 +617,36 @@ components:
 
     VoiceUnitsEnum:
       type: string
-      description: >
-        Unit system for voice instructions. Defaults to `imperial` in the US
-        and `metric` elsewhere.
+      description: Unit system for voice instructions.
       enum:
         - imperial
+        - british_imperial
         - metric
+
+    NotificationsEnum:
+      type: string
+      description: Whether to include notification objects in the response.
+      default: all
+      enum:
+        - all
+        - none
 
     ApproachEnum:
       type: string
-      description: >
-        Side of the road from which to approach a waypoint.
-        `unrestricted` allows either side; `curb` requires the driving side.
+      description: Side of the road from which to approach a waypoint.
       enum:
         - unrestricted
         - curb
 
     EngineEnum:
       type: string
-      description: Vehicle engine type. Set to `electric` to enable EV routing.
+      description: Vehicle engine type. Set to electric to enable EV routing.
       enum:
         - electric
 
     ResponseCodeEnum:
       type: string
-      description: API response or error code.
+      description: API response code.
       enum:
         - Ok
         - NoRoute
@@ -644,6 +763,23 @@ components:
         - violation
         - alert
 
+    RouteGeometry:
+      type: object
+      description: GeoJSON LineString geometry of the route.
+      properties:
+        type:
+          type: string
+          enum:
+            - LineString
+        coordinates:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+            minItems: 2
+            maxItems: 2
+
     DirectionsResponse:
       type: object
       properties:
@@ -654,12 +790,12 @@ components:
           description: Unique identifier of the request, for debugging.
         routes:
           type: array
-          description: Array of route objects, ordered by recommended rank.
+          description: Array of route objects ordered by recommended rank.
           items:
             $ref: "#/components/schemas/Route"
         waypoints:
           type: array
-          description: Array of waypoint objects representing the snapped input coordinates.
+          description: Snapped input coordinates. Moved into route objects when waypoints_per_route=true.
           items:
             $ref: "#/components/schemas/Waypoint"
 
@@ -668,7 +804,7 @@ components:
       properties:
         name:
           type: string
-          description: Name of the road or path the waypoint was snapped to.
+          description: Name of the road the waypoint was snapped to.
         location:
           type: array
           description: "[longitude, latitude] of the snapped coordinate."
@@ -682,6 +818,22 @@ components:
         hint:
           type: string
           description: Unique identifier for the snapped location, used for result caching.
+        time_zone:
+          $ref: "#/components/schemas/TimeZone"
+
+    TimeZone:
+      type: object
+      description: Time zone at the waypoint. Present when depart_at or arrive_by is used.
+      properties:
+        identifier:
+          type: string
+          description: IANA time zone identifier (e.g. America/New_York).
+        offset:
+          type: string
+          description: UTC offset string (e.g. -05:00).
+        abbreviation:
+          type: string
+          description: Time zone abbreviation (e.g. EST).
 
     Route:
       type: object
@@ -694,19 +846,18 @@ components:
           description: Estimated travel time in seconds.
         duration_typical:
           type: number
-          description: Typical travel time without live traffic, in seconds.
+          description: Typical travel time without live traffic in seconds. Available for driving-traffic.
         weight:
           type: number
           description: Internal weight used for route ranking.
         weight_name:
           type: string
-          description: Name of the weight metric used (e.g. `routability`, `duration`).
+          description: Name of the weight metric (e.g. routability, duration).
+        weight_typical:
+          type: number
+          description: Typical weight without live traffic. Available for driving-traffic.
         geometry:
-          description: Route geometry. Format depends on the `geometries` parameter.
-          oneOf:
-            - type: string
-              description: Encoded polyline string (polyline or polyline6 format).
-            - $ref: "#/components/schemas/GeoJsonLineString"
+          $ref: "#/components/schemas/RouteGeometry"
         legs:
           type: array
           description: Array of route leg objects.
@@ -714,7 +865,12 @@ components:
             $ref: "#/components/schemas/RouteLeg"
         voiceLocale:
           type: string
-          description: Locale used for voice instructions.
+          description: Locale used for voice instructions. Present when steps=true.
+        waypoints:
+          type: array
+          description: Per-route waypoints. Present when waypoints_per_route=true.
+          items:
+            $ref: "#/components/schemas/Waypoint"
 
     RouteLeg:
       type: object
@@ -727,31 +883,76 @@ components:
           description: Estimated duration of this leg in seconds.
         duration_typical:
           type: number
-          description: Typical duration without live traffic, in seconds.
+          description: Typical duration without live traffic in seconds. Available for driving-traffic.
+        weight:
+          type: number
+          description: Internal weight for this leg.
+        weight_typical:
+          type: number
+          description: Typical weight without live traffic. Available for driving-traffic.
         summary:
           type: string
           description: Summary of the leg (major roads used).
         steps:
           type: array
-          description: Array of route step objects (present when `steps=true`).
+          description: Turn-by-turn step objects. Present when steps=true.
           items:
             $ref: "#/components/schemas/RouteStep"
         annotation:
           $ref: "#/components/schemas/Annotation"
         incidents:
           type: array
-          description: Array of incident objects on this leg.
+          description: Traffic incidents on this leg. Available for driving-traffic.
           items:
             $ref: "#/components/schemas/Incident"
+        closures:
+          type: array
+          description: Live-traffic road closures. Present when annotations=closure.
+          items:
+            $ref: "#/components/schemas/Closure"
         notifications:
           type: array
-          description: Array of notification objects (violations, alerts).
           items:
             $ref: "#/components/schemas/Notification"
+        via_waypoints:
+          type: array
+          description: Pass-through (intermediate) waypoints on this leg.
+          items:
+            $ref: "#/components/schemas/ViaWaypoint"
+        admins:
+          type: array
+          description: Administrative regions traversed by this leg.
+          items:
+            $ref: "#/components/schemas/Admin"
+
+    ViaWaypoint:
+      type: object
+      description: A pass-through waypoint on a route leg.
+      properties:
+        waypoint_index:
+          type: integer
+          description: Index of the corresponding input coordinate.
+        distance_from_start:
+          type: number
+          description: Distance in meters from the start of the leg.
+        geometry_index:
+          type: integer
+          description: Index into the route geometry where this waypoint occurs.
+
+    Admin:
+      type: object
+      description: Administrative region traversed by the route.
+      properties:
+        iso_3166_1:
+          type: string
+          description: ISO 3166-1 alpha-2 country code.
+        iso_3166_1_alpha3:
+          type: string
+          description: ISO 3166-1 alpha-3 country code.
 
     Annotation:
       type: object
-      description: Per-coordinate metadata. Only present when `annotations` is set.
+      description: Per-coordinate metadata. Present when the annotations parameter is set.
       properties:
         distance:
           type: array
@@ -770,9 +971,9 @@ components:
           description: Speed in m/s between each pair of coordinates.
         congestion:
           type: array
-          description: Qualitative congestion level per coordinate pair.
           items:
             $ref: "#/components/schemas/CongestionLevelEnum"
+          description: Qualitative congestion level per coordinate pair.
         congestion_numeric:
           type: array
           items:
@@ -782,13 +983,33 @@ components:
         maxspeed:
           type: array
           items:
-            type: object
+            $ref: "#/components/schemas/MaxSpeed"
           description: Maximum speed limit per segment.
         closure:
           type: array
           items:
             type: object
           description: Live-traffic closure objects per segment.
+
+    MaxSpeed:
+      type: object
+      description: Speed limit for a route segment.
+      properties:
+        speed:
+          type: number
+          description: Speed limit value.
+        unit:
+          type: string
+          description: Unit of the speed limit.
+          enum:
+            - km/h
+            - mph
+        unknown:
+          type: boolean
+          description: True if the speed limit is unknown.
+        none:
+          type: boolean
+          description: True if there is no speed limit (unlimited).
 
     RouteStep:
       type: object
@@ -799,17 +1020,21 @@ components:
         duration:
           type: number
           description: Estimated duration of this step in seconds.
+        duration_typical:
+          type: number
+          description: Typical duration without live traffic.
+        weight:
+          type: number
+        weight_typical:
+          type: number
         geometry:
-          description: Step geometry.
-          oneOf:
-            - type: string
-            - $ref: "#/components/schemas/GeoJsonLineString"
+          $ref: "#/components/schemas/RouteGeometry"
         name:
           type: string
           description: Name of the road or path.
         ref:
           type: string
-          description: Road reference (e.g. highway number).
+          description: Road designation (e.g. highway number).
         destinations:
           type: string
           description: Destinations signposted at the road.
@@ -817,26 +1042,39 @@ components:
           type: string
           description: Exit numbers or names.
         driving_side:
-          description: Which side of the road traffic drives on.
           $ref: "#/components/schemas/DrivingSideEnum"
         mode:
-          description: Transport mode for this step.
           $ref: "#/components/schemas/StepModeEnum"
+        pronunciation:
+          type: string
+          description: IPA pronunciation of the step name.
         maneuver:
           $ref: "#/components/schemas/StepManeuver"
         intersections:
           type: array
           items:
             type: object
-          description: Intersections along the step.
-        voice_instructions:
+          description: Intersections along this step.
+        voiceInstructions:
           type: array
           items:
             $ref: "#/components/schemas/VoiceInstruction"
-        banner_instructions:
+        bannerInstructions:
           type: array
           items:
             $ref: "#/components/schemas/BannerInstruction"
+        speedLimitSign:
+          type: string
+          description: Speed limit sign convention. Present when annotations=maxspeed.
+          enum:
+            - mutcd
+            - vienna
+        speedLimitUnit:
+          type: string
+          description: Speed limit unit. Present when annotations=maxspeed.
+          enum:
+            - km/h
+            - mph
 
     StepManeuver:
       type: object
@@ -855,10 +1093,8 @@ components:
           type: integer
           description: Bearing after the maneuver (0–359°).
         type:
-          description: Type of maneuver.
           $ref: "#/components/schemas/ManeuverTypeEnum"
         modifier:
-          description: Direction modifier for the maneuver.
           $ref: "#/components/schemas/ManeuverModifierEnum"
         instruction:
           type: string
@@ -878,7 +1114,7 @@ components:
           description: Plain-text version of the instruction.
         ssmlAnnouncement:
           type: string
-          description: SSML-formatted version of the instruction for text-to-speech.
+          description: SSML-formatted version for text-to-speech.
 
     BannerInstruction:
       type: object
@@ -889,14 +1125,17 @@ components:
         primary:
           $ref: "#/components/schemas/BannerComponent"
         secondary:
-          $ref: "#/components/schemas/BannerComponent"
           nullable: true
+          allOf:
+            - $ref: "#/components/schemas/BannerComponent"
         then:
-          $ref: "#/components/schemas/BannerComponent"
           nullable: true
+          allOf:
+            - $ref: "#/components/schemas/BannerComponent"
         sub:
-          $ref: "#/components/schemas/BannerComponent"
           nullable: true
+          allOf:
+            - $ref: "#/components/schemas/BannerComponent"
 
     BannerComponent:
       type: object
@@ -905,10 +1144,8 @@ components:
           type: string
           description: Full text of the instruction.
         type:
-          description: Maneuver type.
           $ref: "#/components/schemas/ManeuverTypeEnum"
         modifier:
-          description: Direction modifier.
           $ref: "#/components/schemas/ManeuverModifierEnum"
         degrees:
           type: number
@@ -917,7 +1154,7 @@ components:
           $ref: "#/components/schemas/DrivingSideEnum"
         components:
           type: array
-          description: Sub-components of the banner text (for abbreviation rendering).
+          description: Sub-components for abbreviated rendering.
           items:
             type: object
             properties:
@@ -927,8 +1164,21 @@ components:
                 $ref: "#/components/schemas/BannerComponentTypeEnum"
               abbr:
                 type: string
+                description: Abbreviated form of the text.
               abbr_priority:
                 type: integer
+                description: Abbreviation priority — lower value means higher priority.
+
+    Closure:
+      type: object
+      description: A live-traffic road closure on a route segment.
+      properties:
+        geometry_index_start:
+          type: integer
+          description: Start index in the route geometry.
+        geometry_index_end:
+          type: integer
+          description: End index in the route geometry.
 
     Incident:
       type: object
@@ -990,21 +1240,6 @@ components:
               type: string
             message:
               type: string
-
-    GeoJsonLineString:
-      type: object
-      properties:
-        type:
-          type: string
-          enum: [LineString]
-        coordinates:
-          type: array
-          items:
-            type: array
-            items:
-              type: number
-            minItems: 2
-            maxItems: 2
 
     DirectionsError:
       type: object
